@@ -17,10 +17,13 @@ if (file_exists($filename)) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>  
     <style>  
         body {  
-            font-family: Arial, sans-serif;  
-            margin: 0;  
-            padding: 0;  
-            background-color: #4CAF50;  
+            font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-image: url('vibrant-green-watercolor-painting-background_53876-139888.avif'); 
+        background-size: cover; 
+        background-repeat: no-repeat; 
+        background-position: center;  
         }  
         .container {  
             width: 100%;  
@@ -52,7 +55,7 @@ if (file_exists($filename)) {
             font-size: 16px;  
         }  
         input[type="text"].time-entry {  
-            width: 80px;
+            width: 80px;  
         }  
         .time-container {  
             display: flex;  
@@ -89,6 +92,22 @@ if (file_exists($filename)) {
         tr:nth-child(even) {  
             background-color: #f2f2f2;  
         }  
+        #suggestions {
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: white;
+            position: relative;
+            z-index: 1000;
+            display: none; 
+        }
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .suggestion-item:hover {
+            background-color: #f0f0f0; 
+        }
     </style>  
 </head>  
 <body>  
@@ -96,30 +115,36 @@ if (file_exists($filename)) {
     <div class="container">  
         <h2>Attendance Form</h2>  
         <form id="attendanceForm">  
-            <label for="id">ID:</label>  
-            <input type="text" id="id" name="id" required>  
 
-            <label for="name">Name:</label>  
-            <input type="text" id="name" name="name" required>  
+        <label for="id">ID:</label>
+            <input type="text" id="id" name="id" required pattern="\d+" title="ID should only contain numbers" oninput="validateID();">
 
-            <label for="password">Password:</label>  
-            <input type="password" id="password" name="password" required>  
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required title="Name should not contain email or '.com'" oninput="validateName();">
+            
+            <div id="suggestions"></div>
 
-            <label for="gender">Gender:</label>  
-            <select id="gender" name="gender" required>  
-                <option value="">Select Gender</option>  
-                <option value="Boy">Boy</option>  
-                <option value="Girl">Girl</option>  
-            </select>  
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
 
-            <label for="time">Time of Entry:</label>  
-            <div class="time-container">  
-                <input type="text" id="time" name="time" class="time-entry" required placeholder="HH:MM">  
-                <label><input type="radio" name="timePeriod" value="AM" required> AM</label>  
-                <label><input type="radio" name="timePeriod" value="PM" required> PM</label>  
-            </div>  
+            <label for="section">Section:</label>
+            <select id="section" name="section" required>
+                <option value="">Select Section</option>
+                <option value="IT3A">IT3A</option>
+                <option value="IT3C">IT3C</option>
+                <option value="IT3E">IT3E</option>
+                <option value="IT3G">IT3G</option>
+                <option value="IT3I">IT3I</option>
+            </select>
 
-            <input type="submit" value="Submit Attendance">  
+            <label for="time">Time of Entry:</label>
+            <div class="time-container">
+                <input type="text" id="time" name="time" class="time-entry" required placeholder="HH:MM">
+                <label><input type="radio" name="timePeriod" value="AM" required> AM</label>
+                <label><input type="radio" name="timePeriod" value="PM" required> PM</label>
+            </div>
+
+            <input type="submit" value="Submit Attendance">
         </form>  
 
         <div class="file-lines">   
@@ -128,7 +153,7 @@ if (file_exists($filename)) {
                     <tr>  
                         <th>ID</th>  
                         <th>Name</th>  
-                        <th>Gender</th>  
+                        <th>Section</th>  
                         <th>Time</th>  
                     </tr>  
                 </thead>  
@@ -136,12 +161,12 @@ if (file_exists($filename)) {
                     <?php if (!empty($fileLines)): ?>  
                         <?php foreach ($fileLines as $lineContent): ?>  
                             <?php  
-                                list($id, $name, $gender, $time) = explode(',', $lineContent);  
+                                list($id, $name, $section, $time) = explode(',', $lineContent);  
                             ?>  
                             <tr>  
                                 <td><?php echo htmlspecialchars($id); ?></td>  
                                 <td><?php echo htmlspecialchars($name); ?></td>  
-                                <td><?php echo htmlspecialchars($gender); ?></td>  
+                                <td><?php echo htmlspecialchars($section); ?></td>  
                                 <td><?php echo htmlspecialchars($time); ?></td>  
                             </tr>  
                         <?php endforeach; ?>  
@@ -151,34 +176,66 @@ if (file_exists($filename)) {
         </div>  
     </div>  
 
-    <script>  
-    $(document).ready(function() {  
-        
-        $("#attendanceForm").on("submit", function(event) {  
-            event.preventDefault();  
+    <script>
+        function validateID() {
+            const idField = document.getElementById('id');
+            const idValue = idField.value;
+            const numberPattern = /^\d+$/;
 
-            $.ajax({  
-                type: "POST",  
-                url: "ajax.php", 
-                data: $(this).serialize(),  
-                dataType: "xml",  
-                success: function(response) {  
-                    let newRow = "<tr>" +  
-                        "<td>" + $(response).find("id").text() + "</td>" +  
-                        "<td>" + $(response).find("name").text() + "</td>" +  
-                        "<td>" + $(response).find("gender").text() + "</td>" +  
-                        "<td>" + $(response).find("time").text() + "</td>" +  
-                        "</tr>";  
+            if (!numberPattern.test(idValue)) {
+                alert('ID should contain numbers only.');
+                idField.value = '';
+            }
+        }
 
-                    $("#attendanceTable tbody").append(newRow);  
-                    $('#attendanceForm')[0].reset();  
-                },  
-                error: function() {  
-                    alert("An error occurred while submitting your attendance.");  
-                }  
-            });  
-        });  
-    });  
+        function validateName() {
+            const nameField = document.getElementById('name');
+            const nameValue = nameField.value;
+            const invalidPattern = /@|\.com$/i;
+
+            if (invalidPattern.test(nameValue)) {
+                alert('Name cannot contain email-like addresses or ".com".');
+                nameField.value = '';
+            }
+        }
+
+        $("#name").on("input", function() {
+            const nameInput = $(this).val();
+            if (nameInput.length > 0) {
+                $.ajax({
+                    type: "GET",
+                    url: "suggestions.php",
+                    data: { q: nameInput },
+                    success: function(data) {
+                        const suggestionsDiv = $("#suggestions");
+                        suggestionsDiv.empty();
+                        
+                        if (data === "no suggestion") {
+                            suggestionsDiv.hide();
+                        } else {
+                            const names = data.split(", ");
+                            names.forEach(name => {
+                                suggestionsDiv.append(`<div class="suggestion-item">${name}</div>`);
+                            });
+                            suggestionsDiv.show();
+                        }
+                    }
+                });
+            } else {
+                $("#suggestions").hide();
+            }
+        });
+
+        $(document).on("click", ".suggestion-item", function() {
+            $("#name").val($(this).text());
+            $("#suggestions").hide();
+        });
+
+        $("#attendanceForm").on("submit", function(event) {
+
+        });
     </script>  
 </body>  
 </html>
+
+
