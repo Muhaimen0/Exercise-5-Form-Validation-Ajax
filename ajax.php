@@ -1,26 +1,27 @@
-<?php  
-$filename = 'attendance_history.txt';  
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {  
-    $id = $_POST['id'] ?? '';  
-    $name = $_POST['name'] ?? '';  
-    $password = $_POST['password'] ?? '';  
-    $gender = $_POST['gender'] ?? '';  
-    $time = $_POST['time'] ?? '';  
-    $timePeriod = $_POST['timePeriod'] ?? '';  
-    
-    $fullTime = "$time $timePeriod";  
-    $newRecord = "$id,$name,$gender,$fullTime\n";  
+    $id = $_POST['id'] ?? '';
+    $name = $_POST['name'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $section = $_POST['section'] ?? ''; 
+    $time = $_POST['time'] ?? '';
+    $timePeriod = $_POST['timePeriod'] ?? '';
 
-    file_put_contents($filename, $newRecord, FILE_APPEND);  
- 
-    header("Content-Type: application/xml");
-    echo "<?xml version='1.0' encoding='UTF-8'?>";
-    echo "<attendance>";
-    echo "<id>" . htmlspecialchars($id) . "</id>";
-    echo "<name>" . htmlspecialchars($name) . "</name>";
-    echo "<gender>" . htmlspecialchars($gender) . "</gender>";
-    echo "<time>" . htmlspecialchars($fullTime) . "</time>";
-    echo "</attendance>";
-}  
+    if (!ctype_digit($id)) {
+        echo 'Invalid ID: Only numbers are allowed.';
+        exit;
+    }
+
+    if (preg_match('/@|\.com$/i', $name)) {
+        echo 'Invalid Name: Name should not contain email-like text or ".com".';
+        exit;
+    }
+
+    $entry = "$id,$name,$section,$time $timePeriod\n";
+    file_put_contents($filename, $entry, FILE_APPEND | LOCK_EX);
+
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+}
 ?>
